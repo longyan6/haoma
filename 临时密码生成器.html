@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>离线临时密码生成器</title>
+  <style>
+    :root{
+      --navy:#173f73;--navy-2:#0f2f57;--blue:#2e6fb4;--bg:#eef4fa;--card:#fff;
+      --line:#cddceb;--text:#102b48;--muted:#60758c;--green:#0a9367;--red:#d9363e;
+      --amber:#a56300;--soft:#f6f9fc;--shadow:0 16px 40px rgba(23,63,115,.10)
+    }
+    *{box-sizing:border-box}html{min-width:320px;background:var(--bg)}body{margin:0;color:var(--text);font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:linear-gradient(180deg,#e9f1f9 0,#f5f8fc 52%,#edf3f9 100%);min-height:100vh}
+    button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+    .topbar{background:var(--navy);color:#fff;box-shadow:0 2px 12px rgba(9,39,75,.22)}
+    .topbar-inner{max-width:1180px;margin:auto;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}.brand-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#fff,#cfe4fa);display:grid;place-items:center;color:var(--navy);font-weight:900;font-size:20px}.brand h1{font-size:22px;margin:0}.brand p{margin:3px 0 0;color:#d6e6f6;font-size:13px}
+    .offline-badge{border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:8px 13px;font-size:13px;background:rgba(255,255,255,.1);white-space:nowrap}
+    main{max-width:1180px;margin:24px auto 56px;padding:0 20px}.tabs{display:flex;gap:8px;margin-bottom:14px}.tab{border:1px solid transparent;border-radius:10px;padding:11px 20px;background:#dfeaf5;color:var(--navy);font-weight:800}.tab.active{background:var(--navy);color:#fff;box-shadow:0 6px 16px rgba(23,63,115,.18)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:24px;margin-bottom:18px}.card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}.card-title h2{margin:0;font-size:21px}.card-title p{margin:5px 0 0;color:var(--muted);font-size:13px}
+    .form-grid{display:grid;grid-template-columns:max-content max-content max-content minmax(240px,1fr);gap:14px;align-items:start}.field-box{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--soft);min-height:145px}.field-box label{display:block;font-weight:800;margin-bottom:9px}.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:7px}.input,.select{width:100%;height:44px;border:1px solid #aec6df;border-radius:9px;background:#fff;color:var(--text);padding:0 12px;outline:none;transition:.15s}.input:focus,.select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(46,111,180,.12)}.input.invalid{border-color:var(--red);background:#fff8f8;box-shadow:0 0 0 3px rgba(217,54,62,.09)}
+    .prefix-box{width:160px}.prefix-box .input{width:96px}.middle-box{width:240px}.middle-list{display:grid;gap:8px}.middle-row{display:grid;grid-template-columns:132px 34px;gap:7px}.icon-btn{height:44px;border:1px solid #c7d7e7;border-radius:9px;background:#fff;color:var(--red);font-weight:900}.add-btn{margin-top:9px;border:0;background:#e2edf8;color:var(--navy);border-radius:8px;padding:8px 12px;font-weight:800}.tail-box{width:170px}.quantity-box{width:100%;min-width:240px;max-width:320px}.combo-box{position:relative;display:flex;width:100%;height:44px}.tail-box .combo-box{width:110px}.combo-box>.input{width:auto;min-width:0;flex:1;border-radius:9px 0 0 9px;border-right:0}.combo-box>.input:focus{position:relative;z-index:1}.combo-toggle{flex:0 0 38px;border:1px solid #aec6df;border-left:0;border-radius:0 9px 9px 0;background:#fff;color:var(--navy);font-size:14px}.combo-toggle:hover,.combo-toggle[aria-expanded="true"]{background:#eaf3fc}.combo-menu{position:absolute;z-index:20;top:calc(100% + 6px);left:0;right:0;max-height:235px;overflow:auto;padding:6px;background:#fff;border:1px solid #b8cde2;border-radius:10px;box-shadow:0 12px 28px rgba(23,63,115,.18)}.combo-option{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;border:0;border-radius:7px;background:#fff;color:var(--text);padding:8px 9px;text-align:left}.combo-option:hover,.combo-option:focus{background:#eaf3fc;outline:none}.combo-option small{color:var(--muted);font-size:11px}
+    .message{border-radius:11px;padding:12px 14px;margin-top:17px;font-size:14px;line-height:1.65}.message.info{background:#eaf4ff;color:#245883}.message.error{background:#fff0f0;color:#b6222a;border:1px solid #f0b8bb}.message.success{background:#e8f7f1;color:#08714f}.message.warn{background:#fff6e7;color:#8a5400}
+    .summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:13px}.stat span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}.stat strong{font-size:18px;color:var(--navy);overflow-wrap:anywhere}
+    .action-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}.primary,.secondary,.danger,.success-btn{border:0;border-radius:10px;padding:11px 17px;font-weight:800}.primary{background:var(--navy);color:#fff}.primary:hover{background:var(--navy-2)}.primary:disabled{cursor:not-allowed;background:#9eb0c1}.secondary{background:#e5eef7;color:var(--navy)}.danger{background:#ffe3e4;color:#b91f28}.success-btn{background:var(--green);color:#fff}.format-select{height:42px;border:1px solid var(--line);border-radius:9px;padding:0 10px;color:var(--text);background:#fff}
+    .progress-shell{margin-top:16px}.progress-info{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);margin-bottom:7px}.progress{height:12px;background:#e1ebf5;border-radius:999px;overflow:hidden}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#297fc2,#0a9c6d);transition:width .2s}
+    .preview-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:16px;max-height:390px}table{width:100%;border-collapse:collapse;min-width:660px}th{position:sticky;top:0;background:var(--navy);color:#fff;text-align:left;padding:11px 13px;font-size:13px}td{padding:10px 13px;border-bottom:1px solid #e0e9f2;font-size:13px}tbody tr:last-child td{border-bottom:0}.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+    .archive-toolbar{display:flex;gap:9px;flex-wrap:wrap}.archive-list{display:grid;gap:10px;margin-top:16px}.archive-item{display:grid;grid-template-columns:1.5fr .7fr .9fr .9fr auto;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--soft)}.archive-item .label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}.archive-item strong{overflow-wrap:anywhere}.archive-item button{justify-self:end}.batch-list{margin-top:20px}.batch-list h3{font-size:16px;margin:0 0 10px}.notice-list{margin:0;padding-left:20px;color:var(--muted);line-height:1.8;font-size:13px}
+    @media(max-width:900px){.form-grid{grid-template-columns:1fr 1fr}.prefix-box,.middle-box,.tail-box,.quantity-box{width:auto;max-width:none;min-width:0}.summary-grid{grid-template-columns:repeat(2,1fr)}.archive-item{grid-template-columns:1fr 1fr}.archive-item button{justify-self:start}}
+    @media(max-width:580px){.topbar-inner{padding:16px}.brand p{display:none}.offline-badge{font-size:11px}.form-grid{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr 1fr}.card{padding:17px;border-radius:14px}.tabs{overflow:auto}.archive-item{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><div class="brand-mark">码</div><div><h1>离线临时密码生成器</h1><p>随机、不重复、跨批次自动跳过历史号码</p></div></div>
+      <div class="offline-badge">● 完全离线 · 本机存档</div>
+    </div>
+  </header>
+  <main>
+    <nav class="tabs" aria-label="功能导航">
+      <button class="tab active" data-tab="generator">号码生成</button>
+      <button class="tab" data-tab="archives">存档管理</button>
+    </nav>
+
+    <section id="generatorPanel">
+      <div class="card">
+        <div class="card-title"><div><h2>设置生成规则</h2><p>四项参数共同组成最终号码，历史记录会自动参与容量计算。</p></div></div>
+        <div class="form-grid">
+          <div class="field-box prefix-box">
+            <label for="prefix">开头</label>
+            <input id="prefix" class="input" inputmode="numeric" maxlength="3" placeholder="0–3位，可留空" autocomplete="off">
+            <div class="hint">只能输入数字，最多3位。</div>
+          </div>
+          <div class="field-box middle-box">
+            <label>中间组合</label>
+            <div id="middleList" class="middle-list"></div>
+            <button id="addMiddle" class="add-btn" type="button">＋ 添加一种组合</button>
+            <div class="hint">每种0–5位；空行忽略，重复时必须修改。</div>
+          </div>
+          <div class="field-box tail-box">
+            <label for="tailInput">尾数位数</label>
+            <div class="combo-box" data-combo>
+              <input id="tailInput" class="input" inputmode="numeric" maxlength="2" value="7" aria-label="尾数位数，可输入或下拉选择" autocomplete="off">
+              <button class="combo-toggle" type="button" aria-label="展开尾数位数选项" aria-expanded="false">▼</button>
+              <div class="combo-menu hidden" role="listbox" aria-label="尾数位数选项">
+                <button class="combo-option" type="button" data-value="1" role="option">1位</button><button class="combo-option" type="button" data-value="2" role="option">2位</button><button class="combo-option" type="button" data-value="3" role="option">3位</button><button class="combo-option" type="button" data-value="4" role="option">4位</button><button class="combo-option" type="button" data-value="5" role="option">5位</button>
+                <button class="combo-option" type="button" data-value="6" role="option">6位</button><button class="combo-option" type="button" data-value="7" role="option">7位</button><button class="combo-option" type="button" data-value="8" role="option">8位</button><button class="combo-option" type="button" data-value="9" role="option">9位</button><button class="combo-option" type="button" data-value="10" role="option">10位</button>
+              </div>
+            </div>
+            <div class="hint">同一个框可输入或下拉选择1–10，尾数保留前导零。</div>
+          </div>
+          <div class="field-box quantity-box">
+            <label for="quantity">生成数量（合计）</label>
+            <div class="combo-box" data-combo>
+              <input id="quantity" class="input" inputmode="numeric" placeholder="输入数量或下拉选择" aria-label="生成数量（合计）" autocomplete="off">
+              <button class="combo-toggle" type="button" aria-label="展开生成数量选项" aria-expanded="false">▼</button>
+              <div class="combo-menu hidden" role="listbox" aria-label="生成数量选项">
+                <button class="combo-option" type="button" data-value="10000" role="option"><span>1万</span><small>10,000</small></button>
+                <button class="combo-option" type="button" data-value="50000" role="option"><span>5万</span><small>50,000</small></button>
+                <button class="combo-option" type="button" data-value="100000" role="option"><span>10万</span><small>100,000</small></button>
+              </div>
+            </div>
+            <div class="hint">同一个框可手动输入或下拉选择；手动最多1000万，并在全部中间组合之间尽量平均分配。</div>
+          </div>
+        </div>
+        <div id="validationMessage" class="message info">请填写规则和生成数量。</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div><h2>生成计划</h2><p>容量已经扣除本机存档中曾经生成过的号码。</p></div></div>
+        <div class="summary-grid">
+          <div class="stat"><span>有效中间组合</span><strong id="statMiddles">1种</strong></div>
+          <div class="stat"><span>尾数位数</span><strong id="statTail">5位</strong></div>
+          <div class="stat"><span>历史已生成</span><strong id="statHistory">0条</strong></div>
+          <div class="stat"><span>当前剩余容量</span><strong id="statRemaining">100,000条</strong></div>
+          <div class="stat"><span>本次计划生成</span><strong id="statPlan">0条</strong></div>
+        </div>
+        <div class="action-row">
+          <button id="generateBtn" class="primary" disabled>开始生成并下载</button>
+          <button id="cancelBtn" class="danger hidden">停止生成</button>
+          <select id="formatSelect" class="format-select" aria-label="下载格式"><option value="txt">TXT 每行一个</option><option value="csv">CSV 单列</option></select>
+          <span class="hint">超过50万条时需选择保存目录，并自动按每100万条分卷。</span>
+        </div>
+        <div id="progressShell" class="progress-shell hidden">
+          <div class="progress-info"><span id="progressText">准备生成…</span><span id="progressPercent">0%</span></div>
+          <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+        </div>
+        <div id="resultMessage" class="message success hidden"></div>
+        <div id="previewWrap" class="preview-wrap hidden">
+          <table><thead><tr><th style="width:90px">序号</th><th>号码预览（最多100条）</th><th>对应中间组合</th></tr></thead><tbody id="previewBody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div><h2>使用说明</h2><p>本程序不联网，文件和存档都只保留在当前电脑。</p></div></div>
+        <ul class="notice-list">
+          <li>同一“固定部分＋尾数位数”会共享存档，即使开头和中间的拆分方式不同也不会重新生成旧号码。</li>
+          <li>清理浏览器数据、更换浏览器或电脑会导致本机存档不可用，请定期在“存档管理”中导出备份。</li>
+          <li>1000万条文件体积很大，生成可能需要较长时间；大批量仅建议使用最新版Chrome或Edge。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="archivesPanel" class="hidden">
+      <div class="card">
+        <div class="card-title"><div><h2>本机存档管理</h2><p>存档只记录随机种子和进度，不保存每一条号码。</p></div></div>
+        <div class="archive-toolbar">
+          <button id="exportArchive" class="primary">导出存档备份</button>
+          <button id="importArchive" class="secondary">导入存档备份</button>
+          <button id="clearArchive" class="danger">清空全部存档</button>
+          <input id="archiveFile" type="file" accept="application/json,.json" class="hidden">
+        </div>
+        <div id="archiveMessage" class="message warn">存档保存在当前浏览器中。大批量生成后请及时导出备份。</div>
+        <div id="archiveList" class="archive-list"></div>
+        <div class="batch-list"><h3>最近生成批次</h3><div id="batchTable"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (()=>{
+    'use strict';
+    const STORAGE_KEY='offline_temp_password_archives_v1';
+    const MAX_SINGLE_RUN=10000000;
+    const MEMORY_LIMIT=500000;
+    const FILE_LINES=1000000;
+    const FLUSH_LINES=5000;
+    const $=s=>document.querySelector(s);
+    const $$=s=>[...document.querySelectorAll(s)];
+    const els={
+      prefix:$('#prefix'),middleList:$('#middleList'),addMiddle:$('#addMiddle'),tailInput:$('#tailInput'),quantity:$('#quantity'),validation:$('#validationMessage'),generate:$('#generateBtn'),cancel:$('#cancelBtn'),format:$('#formatSelect'),progressShell:$('#progressShell'),progressText:$('#progressText'),progressPercent:$('#progressPercent'),progressBar:$('#progressBar'),result:$('#resultMessage'),previewWrap:$('#previewWrap'),previewBody:$('#previewBody'),archiveList:$('#archiveList'),batchTable:$('#batchTable'),archiveMessage:$('#archiveMessage'),archiveFile:$('#archiveFile')
+    };
+    let store=loadStore(),cancelRequested=false,generating=false,currentPlan=null;
+
+    function loadStore(){
+      try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return {version:1,rules:{},batches:[]};const data=JSON.parse(raw);if(data&&data.version===1&&data.rules)return data}catch(e){}
+      return {version:1,rules:{},batches:[]};
+    }
+    function saveStore(){localStorage.setItem(STORAGE_KEY,JSON.stringify(store))}
+    function fmt(n){return Number(n||0).toLocaleString('zh-CN')}
+    function digitsOnly(v){return String(v||'').replace(/\D/g,'')}
+    function nowText(){return new Date().toLocaleString('zh-CN',{hour12:false})}
+    function fileStamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
+    function randomSeed(){const a=new Uint32Array(2);crypto.getRandomValues(a);return [a[0]>>>0,a[1]>>>0]}
+    function ruleKey(fixed,tail){return `${fixed}|${tail}`}
+    function capacity(tail){return 10**tail}
+    function escapeHtml(v){return String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+    function createMiddleRow(value=''){
+      const row=document.createElement('div');row.className='middle-row';
+      row.innerHTML=`<input class="input middle-input" inputmode="numeric" maxlength="5" placeholder="0–5位，可留空" autocomplete="off" value="${escapeHtml(value)}"><button class="icon-btn remove-middle" type="button" title="删除此组合">×</button>`;
+      row.querySelector('input').addEventListener('input',e=>{e.target.value=digitsOnly(e.target.value).slice(0,5);validate()});
+      row.querySelector('button').addEventListener('click',()=>{if($$('.middle-row').length===1)row.querySelector('input').value='';else row.remove();validate()});
+      els.middleList.appendChild(row);
+    }
+    function closeComboMenus(except=null){
+      $$('[data-combo]').forEach(box=>{if(box===except)return;box.querySelector('.combo-menu').classList.add('hidden');box.querySelector('.combo-toggle').setAttribute('aria-expanded','false')});
+    }
+    function setupCombo(box){
+      const input=box.querySelector('.input'),toggle=box.querySelector('.combo-toggle'),menu=box.querySelector('.combo-menu');
+      const open=()=>{closeComboMenus(box);menu.classList.remove('hidden');toggle.setAttribute('aria-expanded','true')};
+      const close=()=>{menu.classList.add('hidden');toggle.setAttribute('aria-expanded','false')};
+      toggle.addEventListener('click',e=>{e.stopPropagation();menu.classList.contains('hidden')?open():close()});
+      box.querySelectorAll('.combo-option').forEach(option=>option.addEventListener('click',()=>{input.value=option.dataset.value;input.dispatchEvent(new Event('input',{bubbles:true}));close();input.focus()}));
+      box.addEventListener('click',e=>e.stopPropagation());
+    }
+    function middleValues(){
+      const inputs=$$('.middle-input'),raw=inputs.map(i=>i.value.trim()),nonEmpty=raw.filter(Boolean),seen=new Set(),dupes=new Set();
+      nonEmpty.forEach(v=>seen.has(v)?dupes.add(v):seen.add(v));
+      inputs.forEach(i=>i.classList.toggle('invalid',i.value&&dupes.has(i.value)));
+      return {values:nonEmpty.length?nonEmpty:[''],dupes:[...dupes]};
+    }
+    function ensureRule(fixed,tail){
+      const key=ruleKey(fixed,tail);if(!store.rules[key])store.rules[key]={key,fixed,tail,seed:randomSeed(),cursor:0,createdAt:nowText(),updatedAt:nowText()};return store.rules[key];
+    }
+    function readPlan(createRules=false){
+      const prefix=els.prefix.value.trim(),tail=Number(els.tailInput.value),qty=Number(els.quantity.value||0),middle=middleValues(),errors=[];
+      if(!/^\d{0,3}$/.test(prefix))errors.push('开头只能输入0–3位数字。');
+      if(!Number.isInteger(tail)||tail<1||tail>10)errors.push('尾数位数只能输入1–10。');
+      if(middle.dupes.length)errors.push(`检测到重复的中间组合：${middle.dupes.join('、')}，请修改后再生成。`);
+      if(els.quantity.value&&!/^\d+$/.test(els.quantity.value))errors.push('生成数量只能输入正整数。');
+      if(qty>MAX_SINGLE_RUN)errors.push(`单次最多生成${fmt(MAX_SINGLE_RUN)}条号码，请分批生成。`);
+      const infos=[];
+      if(!errors.length||Number.isInteger(tail)){
+        const safeTail=Number.isInteger(tail)&&tail>=1&&tail<=10?tail:1,cap=capacity(safeTail);
+        middle.values.forEach(mid=>{
+          const fixed=prefix+mid,key=ruleKey(fixed,safeTail),rule=store.rules[key]||(createRules?ensureRule(fixed,safeTail):null),used=rule?Number(rule.cursor||0):0;
+          infos.push({middle:mid,fixed,key,tail:safeTail,cap,used,available:Math.max(0,cap-used),rule});
+        });
+      }
+      const history=infos.reduce((s,x)=>s+x.used,0),remaining=infos.reduce((s,x)=>s+x.available,0),initial=infos.reduce((s,x)=>s+x.cap,0);
+      if(qty>0&&qty>remaining)errors.push(`合计最多还可生成${fmt(remaining)}条不重复号码。当前要求生成${fmt(qty)}条，超出${fmt(qty-remaining)}条。`);
+      return {prefix,tail,qty,middles:middle.values,dupes:middle.dupes,infos,history,remaining,initial,errors};
+    }
+    function validate(){
+      els.prefix.value=digitsOnly(els.prefix.value).slice(0,3);els.tailInput.value=digitsOnly(els.tailInput.value).slice(0,2);els.quantity.value=digitsOnly(els.quantity.value).replace(/^0+(?=\d)/,'');
+      const p=readPlan(false);currentPlan=p;
+      $('#statMiddles').textContent=`${p.middles.length}种`;$('#statTail').textContent=`${p.tail||'—'}位`;$('#statHistory').textContent=`${fmt(p.history)}条`;$('#statRemaining').textContent=`${fmt(p.remaining)}条`;$('#statPlan').textContent=`${fmt(p.qty)}条`;
+      if(p.errors.length){els.validation.className='message error';els.validation.textContent=p.errors[0]}
+      else if(!p.qty){els.validation.className='message info';els.validation.textContent=`当前${p.middles.length}种中间组合，初始共有${fmt(p.initial)}种组合；请输入生成数量。`}
+      else{els.validation.className='message success';const each=Math.floor(p.qty/p.middles.length),extra=p.qty%p.middles.length;els.validation.textContent=`本次共生成${fmt(p.qty)}条号码，将分配给${p.middles.length}种中间组合，每种约${fmt(each)}条${extra?`，其中前${extra}种各多1条`:''}。`}
+      els.generate.disabled=generating||!!p.errors.length||!p.qty;
+      return p;
+    }
+    function allocate(total,infos){
+      const out=infos.map(x=>({...x,allocation:0,localCursor:x.used}));let left=total,active=out.map((_,i)=>i).filter(i=>out[i].available>0);
+      while(left>0&&active.length){
+        const base=Math.floor(left/active.length);
+        if(base===0){for(const i of active){if(!left)break;if(out[i].allocation<out[i].available){out[i].allocation++;left--}}}
+        else{for(const i of active){const room=out[i].available-out[i].allocation,take=Math.min(base,room);out[i].allocation+=take;left-=take}}
+        active=active.filter(i=>out[i].allocation<out[i].available);
+      }
+      if(left)throw new Error('剩余容量不足。');return out;
+    }
+
+    function roundHash(seed,round,text){
+      let h=(seed[0]^Math.imul(round+1,0x9e3779b1)^seed[1])>>>0;
+      for(let i=0;i<text.length;i++){h=Math.imul(h^text.charCodeAt(i),0x85ebca6b)>>>0;h=(h<<13|h>>>19)>>>0}
+      h^=h>>>16;h=Math.imul(h,0x7feb352d)>>>0;h^=h>>>15;h=Math.imul(h,0x846ca68b)>>>0;h^=h>>>16;return h>>>0;
+    }
+    function permutedSuffix(index,digits,seed){
+      let s=String(index).padStart(digits,'0'),u=Math.floor(digits/2),v=digits-u,A=s.slice(0,u),B=s.slice(u);
+      for(let r=0;r<8;r++){
+        const m=r%2===0?u:v,mod=10**m,a=A?Number(A):0,y=(a+(roundHash(seed,r,B)%mod))%mod;
+        A=B;B=m?String(y).padStart(m,'0'):'';
+      }
+      return A+B;
+    }
+    function updateProgress(done,total,label='正在生成'){
+      const pct=total?Math.min(100,done/total*100):0;els.progressBar.style.width=`${pct}%`;els.progressPercent.textContent=`${pct.toFixed(pct<1?2:1)}%`;els.progressText.textContent=`${label}：${fmt(done)} / ${fmt(total)} 条`;
+    }
+    function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+    function addBatch(plan,done,status,files){
+      store.batches.unshift({id:Date.now(),time:nowText(),prefix:plan.prefix,middles:plan.middles,tail:plan.tail,requested:plan.qty,generated:done,status,files});store.batches=store.batches.slice(0,200);saveStore();
+    }
+    function commitCursors(allocs){allocs.forEach(x=>{const rule=store.rules[x.key];rule.cursor=x.localCursor;rule.updatedAt=nowText()});saveStore()}
+    function yieldFrame(){return new Promise(r=>setTimeout(r,0))}
+
+    async function generate(){
+      if(generating)return;let plan=readPlan(true);saveStore();plan=readPlan(true);if(plan.errors.length||!plan.qty){validate();return}
+      const useStream=plan.qty>MEMORY_LIMIT;
+      let directory=null;
+      if(useStream){
+        if(!window.showDirectoryPicker){els.result.className='message error';els.result.textContent='当前浏览器不支持大文件流式保存。请使用最新版Chrome或Edge，或将单次数量减少到500,000条以内。';els.result.classList.remove('hidden');return}
+        try{directory=await window.showDirectoryPicker({mode:'readwrite'})}catch(e){if(e.name!=='AbortError')alert(`无法选择保存目录：${e.message}`);return}
+      }
+      generating=true;cancelRequested=false;els.generate.disabled=true;els.cancel.classList.remove('hidden');els.progressShell.classList.remove('hidden');els.result.classList.add('hidden');els.previewWrap.classList.add('hidden');els.previewBody.innerHTML='';
+      const allocs=allocate(plan.qty,plan.infos),preview=[],format=els.format.value,stamp=fileStamp();let done=0,savedDone=0,files=0,status='完成';
+      try{
+        if(!useStream){
+          const lines=[];if(format==='csv')lines.push('号码');
+          for(const item of allocs){
+            const rule=store.rules[item.key];for(let j=0;j<item.allocation;j++){
+              const suffix=permutedSuffix(item.localCursor,item.tail,rule.seed),number=item.fixed+suffix;item.localCursor++;done++;lines.push(format==='csv'?`="${number}"`:number);if(preview.length<100)preview.push({number,middle:item.middle});
+              if(done%FLUSH_LINES===0){updateProgress(done,plan.qty);await yieldFrame();if(cancelRequested){status='已停止';break}}
+            }if(cancelRequested)break
+          }
+          if(done){const mime=format==='csv'?'text/csv;charset=utf-8':'text/plain;charset=utf-8',bom='\ufeff';downloadBlob(new Blob([bom,lines.join('\r\n')],{type:mime}),`临时密码_${stamp}.${format}`);files=1;commitCursors(allocs);savedDone=done}
+        }else{
+          let writer=null,fileCount=0,buffer=[],writtenInFile=0;
+          const openFile=async()=>{files++;const ext=format==='csv'?'csv':'txt',handle=await directory.getFileHandle(`临时密码_${stamp}_${String(files).padStart(3,'0')}.${ext}`,{create:true});writer=await handle.createWritable();writtenInFile=0;if(format==='csv')await writer.write('\ufeff号码\r\n');else await writer.write('\ufeff')};
+          const flush=async()=>{if(!buffer.length)return;await writer.write(buffer.join('\r\n')+'\r\n');buffer=[];commitCursors(allocs);savedDone=done};
+          await openFile();
+          for(const item of allocs){
+            const rule=store.rules[item.key];for(let j=0;j<item.allocation;j++){
+              const suffix=permutedSuffix(item.localCursor,item.tail,rule.seed),number=item.fixed+suffix;item.localCursor++;done++;writtenInFile++;buffer.push(format==='csv'?`="${number}"`:number);if(preview.length<100)preview.push({number,middle:item.middle});
+              if(buffer.length>=FLUSH_LINES){await flush();updateProgress(done,plan.qty);await yieldFrame()}
+              if(writtenInFile>=FILE_LINES){await flush();await writer.close();writer=null;if(done<plan.qty&&!cancelRequested)await openFile()}
+              if(cancelRequested){status='已停止';break}
+            }if(cancelRequested)break
+          }
+          await flush();if(writer)await writer.close();commitCursors(allocs);savedDone=done;
+        }
+        addBatch(plan,done,status,files);renderPreview(preview);updateProgress(done,plan.qty,status==='完成'?'生成完成':'已停止');els.result.className=`message ${status==='完成'?'success':'warn'}`;els.result.textContent=status==='完成'?`生成完成：共${fmt(done)}条，已写入${files}个文件，本机存档已更新。建议立即导出存档备份。`:`已停止：已完成并存档${fmt(done)}条，后续会自动跳过这些号码。`;els.result.classList.remove('hidden');renderArchives();
+      }catch(e){status='失败';els.result.className='message error';els.result.textContent=`生成失败：${e.message}。已成功写入的${fmt(savedDone)}条进度会保留，未写入部分不会占用号码。`;els.result.classList.remove('hidden');addBatch(plan,savedDone,status,files)}
+      finally{generating=false;els.cancel.classList.add('hidden');validate()}
+    }
+    function renderPreview(rows){
+      if(!rows.length)return;els.previewBody.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.number)}</td><td>${escapeHtml(r.middle||'（空白）')}</td></tr>`).join('');els.previewWrap.classList.remove('hidden');
+    }
+    function renderArchives(){
+      const rules=Object.values(store.rules).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+      els.archiveList.innerHTML=rules.length?rules.map(r=>{const cap=capacity(r.tail),remaining=Math.max(0,cap-r.cursor);return `<div class="archive-item"><div><span class="label">固定部分</span><strong>${escapeHtml(r.fixed||'（空白）')}</strong></div><div><span class="label">尾数</span><strong>${r.tail}位</strong></div><div><span class="label">历史已生成</span><strong>${fmt(r.cursor)}条</strong></div><div><span class="label">剩余容量</span><strong>${fmt(remaining)}条</strong></div><button class="danger delete-rule" data-key="${escapeHtml(r.key)}">删除</button></div>`}).join(''):'<div class="empty">还没有任何生成存档。</div>';
+      $$('.delete-rule').forEach(b=>b.addEventListener('click',()=>{const r=store.rules[b.dataset.key];if(confirm(`确定删除“${r.fixed||'空白'}＋${r.tail}位尾数”的存档吗？\n\n删除后可能再次生成历史号码，此操作无法撤销。`)){delete store.rules[b.dataset.key];saveStore();renderArchives();validate()}}));
+      const batches=store.batches||[];els.batchTable.innerHTML=batches.length?`<div class="preview-wrap"><table><thead><tr><th>时间</th><th>规则</th><th>生成数量</th><th>状态</th></tr></thead><tbody>${batches.slice(0,30).map(b=>`<tr><td>${escapeHtml(b.time)}</td><td>开头 ${escapeHtml(b.prefix||'空')} · ${b.middles.length}种中间 · 尾数${b.tail}位</td><td>${fmt(b.generated)}条</td><td>${escapeHtml(b.status)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">还没有生成批次。</div>';
+    }
+    function exportArchive(){const payload={app:'离线临时密码生成器',exportedAt:nowText(),data:store};downloadBlob(new Blob(['\ufeff'+JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}),`临时密码存档_${fileStamp()}.json`);els.archiveMessage.className='message success';els.archiveMessage.textContent='存档备份已导出，请妥善保存。'}
+    async function importArchive(file){
+      try{const text=(await file.text()).replace(/^\ufeff/,'');const parsed=JSON.parse(text),data=parsed.data||parsed;if(data.version!==1||!data.rules||!Array.isArray(data.batches))throw new Error('文件格式不正确');if(!confirm(`即将导入${Object.keys(data.rules).length}条规则存档，并替换当前本机存档。是否继续？`))return;store=data;saveStore();renderArchives();validate();els.archiveMessage.className='message success';els.archiveMessage.textContent='存档导入成功。'}catch(e){els.archiveMessage.className='message error';els.archiveMessage.textContent=`导入失败：${e.message}`}
+    }
+
+    createMiddleRow('');
+    $$('[data-combo]').forEach(setupCombo);
+    document.addEventListener('click',()=>closeComboMenus());
+    els.addMiddle.addEventListener('click',()=>{createMiddleRow('');validate()});
+    [els.prefix,els.quantity,els.tailInput].forEach(e=>e.addEventListener('input',validate));
+    els.generate.addEventListener('click',generate);els.cancel.addEventListener('click',()=>{cancelRequested=true;els.cancel.disabled=true;els.cancel.textContent='正在停止…';setTimeout(()=>{els.cancel.disabled=false;els.cancel.textContent='停止生成'},1000)});
+    $$('.tab').forEach(t=>t.addEventListener('click',()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===t));$('#generatorPanel').classList.toggle('hidden',t.dataset.tab!=='generator');$('#archivesPanel').classList.toggle('hidden',t.dataset.tab!=='archives');if(t.dataset.tab==='archives')renderArchives()}));
+    $('#exportArchive').addEventListener('click',exportArchive);$('#importArchive').addEventListener('click',()=>els.archiveFile.click());els.archiveFile.addEventListener('change',()=>{if(els.archiveFile.files[0])importArchive(els.archiveFile.files[0]);els.archiveFile.value=''});
+    $('#clearArchive').addEventListener('click',()=>{if(confirm('确定清空全部存档吗？\n\n清空后程序可能再次生成所有历史号码，此操作无法撤销。')){store={version:1,rules:{},batches:[]};saveStore();renderArchives();validate();els.archiveMessage.className='message warn';els.archiveMessage.textContent='全部存档已清空。'}});
+    renderArchives();validate();
+  })();
+  </script>
+</body>
+</html>
